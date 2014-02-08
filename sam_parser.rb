@@ -56,7 +56,8 @@ class MD
 end
 
 class Read
-  attr_accessor :seq_name, :flag, :chr, :pos, :map_quality, :cigar, :seq, :base_quality, :md, :left_most_pos
+  attr_accessor :seq_name, :flag, :chr, :pos, :map_quality,
+                :cigar, :seq, :base_quality, :md, :left_most_pos
 
   def initialize(r)
     @seq_name, @flag, @chr, @pos, @map_quality, @cigar = r[0..5]
@@ -113,7 +114,9 @@ class Read
           get_next_md.call
         }
         with _[_, :mismatch] {
-          @variants << Variant.new({:type => :mismatch, :ref => current_md.ref, :len => 1})
+          @variants << Variant.new({:type => :mismatch,
+                                    :ref => current_md.ref,
+                                    :len => 1})
           current_cigar.len -= 1
           get_next_md.call
         }
@@ -123,7 +126,8 @@ class Read
         }
         with _[:match, :match] {
           if current_cigar.len > current_md.len
-            @variants << Variant.new({:type => :match, :len => current_md.len })
+            @variants << Variant.new({:type => :match,
+                                      :len => current_md.len })
             current_cigar.len -= current_md.len
             get_next_md.call
             get_next_cigar.call if current_cigar.len == 0
