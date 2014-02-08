@@ -48,4 +48,20 @@ class TestRead < MiniTest::Unit::TestCase
     should_include_variant(variants, :soft, "GCAACAATGG", "T" * 10, 1368, 1378)
     should_include_variant(variants, :mismatch, "C", "A", 1419, 1420)
   end
+
+  def test_ins2
+    r = $data[4]
+    variants = r.get_variants
+    should_include_variant(variants, :mismatch, "C", "A", 1304, 1305)
+    should_include_variant(variants, :ins, "-", "GTC", 1328, 1328)
+  end
+
+  def test_del2
+    r = $data[5]
+    variants = r.get_variants
+    should_include_variant(variants, :mismatch, "T", "G", 1780, 1781)
+    should_include_variant(variants, :del, "GAC", "-", 1826, 1829)
+    should_include_variant(variants, :mismatch, "C", "A", 1846, 1847)
+  end
+
 end
