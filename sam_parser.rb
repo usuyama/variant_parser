@@ -76,62 +76,61 @@ class Read
 
   def get_variants
     md = @md.scan(/\d+|[A-Z]+|\^[A-Z]+/)[2..-1].map {|m| MD.new(m) }
-    cigar = @cigar.scan(/\d+./)
 
     # first, make variants from CIGAR
-    vars = cigar.map {|c| Variant.from_cigar(c) }
+    cigar = @cigar.scan(/\d+./).map {|c| Variant.from_cigar(c) }
 
     # prepare index for tracking CIGAR & MD
-    var_idx, m_idx = -1, -1
-    current_var, current_md = nil, nil
-    get_next_var = proc {
-      var_idx += 1
-      if var_idx < vars.length
-        current_var = vars[var_idx]
+    cigar_idx, md_idx = -1, -1
+    current_cigar, current_md = nil, nil
+    get_next_cigar = proc {
+      cigar_idx += 1
+      if cigar_idx < cigar.length
+        current_cigar = cigar[cigar_idx]
       end
     }
     get_next_md = proc {
-      m_idx += 1
-      if m_idx < md.length
-        current_md = md[m_idx]
+      md_idx += 1
+      if md_idx < md.length
+        current_md = md[md_idx]
       end
     }
     # prepare the first pair of CIGAR and MD
-    get_next_var.call
+    get_next_cigar.call
     get_next_md.call
 
     @variants = []
-    while var_idx < vars.length and m_idx < md.length
-      match([current_var.type, current_md.type]) do
+    while cigar_idx < cigar.length and md_idx < md.length
+      match([current_cigar.type, current_md.type]) do
         with _[:soft, _] {
-          @variants << current_var.clone
-          get_next_var.call
+          @variants << current_cigar.clone
+          get_next_cigar.call
         }
         with _[_, :del] {
-          current_var.ref = current_md.ref
-          @variants << current_var.clone
-          get_next_var.call
+          current_cigar.ref = current_md.ref
+          @variants << current_cigar.clone
+          get_next_cigar.call
           get_next_md.call
         }
         with _[_, :mismatch] {
           @variants << Variant.new({:type => :mismatch, :ref => current_md.ref, :len => 1})
-          current_var.len -= 1
+          current_cigar.len -= 1
           get_next_md.call
         }
         with _[:ins, :match] {
-          @variants << current_var.clone
-          get_next_var.call
+          @variants << current_cigar.clone
+          get_next_cigar.call
         }
         with _[:match, :match] {
-          if current_var.len > current_md.len
+          if current_cigar.len > current_md.len
             @variants << Variant.new({:type => :match, :len => current_md.len })
-            current_var.len -= current_md.len
+            current_cigar.len -= current_md.len
             get_next_md.call
-            get_next_var.call if current_var.len == 0
+            get_next_cigar.call if current_cigar.len == 0
           else
-            @variants << current_var.clone
-            current_md.len -= current_var.len
-            get_next_var.call
+            @variants << current_cigar.clone
+            current_md.len -= current_cigar.len
+            get_next_cigar.call
             get_next_md.call if current_md.len == 0
           end
         }
