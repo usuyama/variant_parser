@@ -12,6 +12,25 @@ class Variant
     end
   end
 
+  def self.from_cigar(c)
+    v = Variant.new({:len => c[0..-2].to_i})
+    case c[-1]
+    when "M" then
+      v.type = :match
+    when "I" then
+      v.type = :ins
+      v.ref = "-"
+    when "D" then
+      v.type = :del
+      v.obs = "-"
+    when "S" then
+      v.type = :soft
+    else
+      raise "not_supported_cigar"
+    end
+    v
+  end
+
   def inspect
     "#{@type} #{@left}-#{@right} #{@ref} #{@obs} len:#{@len}"
   end
@@ -56,23 +75,11 @@ class Read
   end
 
   def get_variants
-    md = @md.scan(/\d+|[A-Z]+|\^[A-Z]+/)[2..-1]
+    md = @md.scan(/\d+|[A-Z]+|\^[A-Z]+/)[2..-1].map {|m| MD.new(m) }
     cigar = @cigar.scan(/\d+./)
 
     # first, make variants from CIGAR
-    vars = []
-    for c in cigar
-      vars << Variant.new({:len => c[0..-2].to_i, :type =>
-        case c[-1]
-        when "M" then :match
-        when "I" then :ins
-        when "S" then :soft
-        when "D" then :del
-        else
-          raise "not_supported"
-        end
-      })
-    end
+    vars = cigar.map {|c| Variant.from_cigar(c) }
 
     # prepare index for tracking CIGAR & MD
     var_idx, m_idx = -1, -1
@@ -86,7 +93,7 @@ class Read
     get_next_md = proc {
       m_idx += 1
       if m_idx < md.length
-        current_md = MD.new(md[m_idx])
+        current_md = md[m_idx]
       end
     }
     # prepare the first pair of CIGAR and MD
@@ -148,13 +155,7 @@ class Read
     b = 0
     for i in 0..@variants.length-1
       v = @variants[i]
-      if v.type == :del
-        v.obs = "-"
-      else
-        case v.type
-        when :ins
-          v.ref = "-"
-        end
+      if v.type != :del
         v.obs = seq[b, v.len]
         b += v.len
       end
