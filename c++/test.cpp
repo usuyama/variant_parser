@@ -16,21 +16,6 @@ protected:
     virtual void TearDown() {};
 };
 
-/*
-TEST_F(VPTest, BasicParser) {
-    Read r1 = Read(lines[0]);
-    cout << r1 << endl;
-    Read r2 = Read(lines[1]);
-    cout << r2 << endl;
-    Read r3 = Read(lines[2]);
-    cout << r3 << endl;
-    Read r4 = Read(lines[3]);
-    cout << r4 << endl;
-    Read r5 = Read(lines[4]);
-    cout << r5 << endl;
-}
-*/
-
 void should_include_variant(const vector<VariantFromSAM> &variants, VariantFromSAM v) {
     ASSERT_TRUE(std::find(variants.begin(), variants.end(), v) != variants.end())
     << "the variant was not found: " << endl
@@ -43,7 +28,6 @@ TEST_F(VPTest, BASIC) {
     should_include_variant(r.variants, VariantFromSAM(VariantFromSAM::MISMATCH, "A", "T", 1824, 1825));
     should_include_variant(r.variants, VariantFromSAM(VariantFromSAM::MISMATCH, "C", "A", 1846, 1847));
 }
-
 
 TEST_F(VPTest, DEL) {
     Read r = Read(lines[1]);
@@ -94,4 +78,3 @@ int main(int argc, char **argv) {
     }
     return RUN_ALL_TESTS();
 }
-
